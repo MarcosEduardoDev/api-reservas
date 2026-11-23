@@ -8,11 +8,11 @@
 		<version>4.1.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.br.estoque</groupId>
-	<artifactId>Estoque</artifactId>
+	<groupId>com.br.reservas</groupId>
+	<artifactId>reservas</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<name>reservas</name>
+	<description>API REST para reserva de salas: cadastro de salas e usuários, reservas sem conflito de horário e cancelamento.</description>
 	<url/>
 	<licenses>
 		<license/>
