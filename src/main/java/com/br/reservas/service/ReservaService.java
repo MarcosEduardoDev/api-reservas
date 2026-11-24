@@ -65,9 +65,13 @@ public class ReservaService {
         return reservaRepository.save(nova);
     }
 
+    /**
+     * Ordem de bloqueios: reserva e depois sala. Criação só trava a sala e cancelamento só a reserva,
+     * então nenhum caminho pega a sala e depois a reserva. Assim não há deadlock.
+     */
     @Transactional
     public Reserva atualizar(Long id, ReservaRequestDTO dto) {
-        Reserva reserva = buscarPorId(id);
+        Reserva reserva = buscarReservaComBloqueio(id);
         reserva.garantirNaoCancelada();
         Reserva.validarPeriodo(dto.getInicio(), dto.getFim());
 
@@ -84,7 +88,7 @@ public class ReservaService {
     /** Cancela a reserva. Não remove o registro, para manter o histórico. */
     @Transactional
     public void cancelar(Long id) {
-        Reserva reserva = buscarPorId(id);
+        Reserva reserva = buscarReservaComBloqueio(id);
         reserva.cancelar();
         reservaRepository.save(reserva);
     }
@@ -124,6 +128,11 @@ public class ReservaService {
         if (ocupado) {
             throw new ConflitoException("O horário da reserva precisa estar disponível.");
         }
+    }
+
+    private Reserva buscarReservaComBloqueio(Long id) {
+        return reservaRepository.buscarComBloqueio(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva inexistente."));
     }
 
     private Sala buscarSalaComBloqueio(Long salaId) {

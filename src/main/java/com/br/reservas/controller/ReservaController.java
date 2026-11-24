@@ -3,10 +3,10 @@ package com.br.reservas.controller;
 import com.br.reservas.dto.ReservaRequestDTO;
 import com.br.reservas.dto.ReservaResponseDTO;
 import com.br.reservas.model.Reserva;
+import com.br.reservas.service.Paginacao;
 import com.br.reservas.service.ReservaService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -76,11 +76,17 @@ public class ReservaController {
                 .toList();
     }
 
-    /** Versão paginada de {@code /periodo}. Ex.: {@code ?inicio=...&fim=...&page=0&size=20&sort=inicio,asc}. */
+    /**
+     * Versão paginada de {@code /periodo}. Ex.: {@code ?inicio=...&fim=...&page=0&size=20&sort=inicio,asc}.
+     * Parâmetros inválidos devolvem 400 (ver {@link Paginacao}).
+     */
     @GetMapping("/paginadas")
     public PagedModel<ReservaResponseDTO> listarNoPeriodoPaginado(@RequestParam LocalDateTime inicio,
                                                                   @RequestParam LocalDateTime fim,
-                                                                  @PageableDefault(size = 20, sort = "inicio") Pageable pageable) {
+                                                                  @RequestParam(defaultValue = "0") int page,
+                                                                  @RequestParam(defaultValue = "20") int size,
+                                                                  @RequestParam(defaultValue = "inicio,asc") String sort) {
+        Pageable pageable = Paginacao.criar(page, size, sort);
         return new PagedModel<>(reservaService.listarNoPeriodoPaginado(inicio, fim, pageable)
                 .map(ReservaResponseDTO::from));
     }
@@ -90,7 +96,10 @@ public class ReservaController {
     public PagedModel<ReservaResponseDTO> listarPorSalaNoPeriodo(@PathVariable Long salaId,
                                                                  @RequestParam LocalDateTime inicio,
                                                                  @RequestParam LocalDateTime fim,
-                                                                 @PageableDefault(size = 20, sort = "inicio") Pageable pageable) {
+                                                                 @RequestParam(defaultValue = "0") int page,
+                                                                 @RequestParam(defaultValue = "20") int size,
+                                                                 @RequestParam(defaultValue = "inicio,asc") String sort) {
+        Pageable pageable = Paginacao.criar(page, size, sort);
         return new PagedModel<>(reservaService.listarPorSalaNoPeriodo(salaId, inicio, fim, pageable)
                 .map(ReservaResponseDTO::from));
     }

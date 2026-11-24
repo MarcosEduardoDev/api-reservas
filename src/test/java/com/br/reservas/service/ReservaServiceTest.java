@@ -161,7 +161,7 @@ class ReservaServiceTest {
     @Test
     void atualizar_mantendoOProprioHorario_naoConflitaComAPropriaReserva() {
         Reserva existente = new Reserva(DIA.plusHours(10), DIA.plusHours(11), sala, usuario);
-        when(reservaRepository.findById(RESERVA_ID)).thenReturn(Optional.of(existente));
+        when(reservaRepository.buscarComBloqueio(RESERVA_ID)).thenReturn(Optional.of(existente));
         stubSalaEUsuario();
         // Sem outras reservas: a checagem ignora o próprio id.
         when(reservaRepository.existsBySala_IdAndTipoReservaAndInicioLessThanAndFimGreaterThanAndIdNot(
@@ -176,7 +176,7 @@ class ReservaServiceTest {
     @Test
     void atualizar_invadindoOutraReserva_lancaConflito() {
         Reserva existente = new Reserva(DIA.plusHours(10), DIA.plusHours(11), sala, usuario);
-        when(reservaRepository.findById(RESERVA_ID)).thenReturn(Optional.of(existente));
+        when(reservaRepository.buscarComBloqueio(RESERVA_ID)).thenReturn(Optional.of(existente));
         stubSalaEUsuario();
         when(reservaRepository.existsBySala_IdAndTipoReservaAndInicioLessThanAndFimGreaterThanAndIdNot(
                 eq(SALA_ID), eq(TipoReserva.ATIVA), any(), any(), eq(RESERVA_ID))).thenReturn(true);
@@ -190,7 +190,7 @@ class ReservaServiceTest {
     void atualizar_reservaCancelada_lancaRegraDeNegocio() {
         Reserva cancelada = new Reserva(DIA.plusHours(10), DIA.plusHours(11), sala, usuario);
         cancelada.cancelar();
-        when(reservaRepository.findById(RESERVA_ID)).thenReturn(Optional.of(cancelada));
+        when(reservaRepository.buscarComBloqueio(RESERVA_ID)).thenReturn(Optional.of(cancelada));
 
         assertThatThrownBy(() -> service.atualizar(RESERVA_ID, dto(14, 15)))
                 .isInstanceOf(RegraDeNegocioException.class);
@@ -200,7 +200,7 @@ class ReservaServiceTest {
     @Test
     void cancelar_marcaReservaComoCancelada() {
         Reserva reserva = new Reserva(DIA.plusHours(10), DIA.plusHours(11), sala, usuario);
-        when(reservaRepository.findById(RESERVA_ID)).thenReturn(Optional.of(reserva));
+        when(reservaRepository.buscarComBloqueio(RESERVA_ID)).thenReturn(Optional.of(reserva));
 
         service.cancelar(RESERVA_ID);
 
@@ -210,7 +210,7 @@ class ReservaServiceTest {
 
     @Test
     void cancelar_reservaInexistente_lancaNaoEncontrado() {
-        when(reservaRepository.findById(RESERVA_ID)).thenReturn(Optional.empty());
+        when(reservaRepository.buscarComBloqueio(RESERVA_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.cancelar(RESERVA_ID))
                 .isInstanceOf(ResourceNotFoundException.class)

@@ -16,6 +16,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import org.springframework.data.domain.PageImpl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -23,6 +25,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -152,6 +155,82 @@ class ReservaControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(reservaService).cancelar(1L);
+    }
+
+    @Test
+    void paginadas_comSortInvalido_devolve400ComCampoSort() throws Exception {
+        mvc.perform(get("/api/v1/reservas/paginadas")
+                        .param("inicio", "2026-12-01T00:00:00")
+                        .param("fim", "2026-12-02T00:00:00")
+                        .param("sort", "campoInexistente"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.sort").exists());
+    }
+
+    @Test
+    void paginadas_comTamanhoAcimaDoLimite_devolve400ComCampoSize() throws Exception {
+        mvc.perform(get("/api/v1/reservas/paginadas")
+                        .param("inicio", "2026-12-01T00:00:00")
+                        .param("fim", "2026-12-02T00:00:00")
+                        .param("size", "1000000"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.size").exists());
+    }
+
+    @Test
+    void paginadas_comPaginaEmFormatoInvalido_devolve400ComCampoPage() throws Exception {
+        mvc.perform(get("/api/v1/reservas/paginadas")
+                        .param("inicio", "2026-12-01T00:00:00")
+                        .param("fim", "2026-12-02T00:00:00")
+                        .param("page", "abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.page").exists());
+    }
+
+    @Test
+    void paginadas_comParametrosValidos_devolve200() throws Exception {
+        when(reservaService.listarNoPeriodoPaginado(any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        mvc.perform(get("/api/v1/reservas/paginadas")
+                        .param("inicio", "2026-12-01T00:00:00")
+                        .param("fim", "2026-12-02T00:00:00")
+                        .param("sort", "inicio,desc"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void rotaInexistente_devolve404NoFormatoPadrao() throws Exception {
+        mvc.perform(get("/api/v1/naoexiste"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.mensagem").exists());
+    }
+
+    @Test
+    void metodoNaoSuportado_devolve405NoFormatoPadrao() throws Exception {
+        mvc.perform(patch("/api/v1/reservas/1"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405));
+    }
+
+    @Test
+    void tipoDeConteudoErrado_devolve415NoFormatoPadrao() throws Exception {
+        mvc.perform(post("/api/v1/reservas")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(JSON_VALIDO))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.status").value(415));
+    }
+
+    @Test
+    void erroInesperado_devolve500SemVazarDetalhes() throws Exception {
+        when(reservaService.buscarPorId(1L))
+                .thenThrow(new IllegalStateException("detalhe interno que não deve vazar"));
+
+        mvc.perform(get("/api/v1/reservas/1"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.mensagem").value("Erro interno do servidor."));
     }
 
     @Test

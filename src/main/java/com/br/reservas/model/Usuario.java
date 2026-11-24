@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -69,23 +70,35 @@ public class Usuario {
      */
     public static String normalizarEmail(String email) {
         if (email == null || email.isBlank()) {
-            throw new DadosInvalidosException("E-mail do usuário é obrigatório.");
+            throw new DadosInvalidosException("email", "E-mail do usuário é obrigatório.");
         }
-        String emailLimpo = email.trim().toLowerCase();
+        // Verificado antes do trim: trim() removeria caracteres de controle nas bordas e mascararia o problema.
+        if (contemCaractereDeControle(email)) {
+            throw new DadosInvalidosException("email", "E-mail contém caracteres inválidos.");
+        }
+        String emailLimpo = email.trim().toLowerCase(Locale.ROOT);
         if (emailLimpo.length() > TAMANHO_MAXIMO_EMAIL || !PADRAO_EMAIL.matcher(emailLimpo).matches()) {
-            throw new DadosInvalidosException("E-mail inválido.");
+            throw new DadosInvalidosException("email", "E-mail inválido.");
         }
         return emailLimpo;
     }
 
     private static String validarNome(String nome) {
         if (nome == null || nome.isBlank()) {
-            throw new DadosInvalidosException("Nome do usuário é obrigatório.");
+            throw new DadosInvalidosException("nome", "Nome do usuário é obrigatório.");
+        }
+        if (contemCaractereDeControle(nome)) {
+            throw new DadosInvalidosException("nome", "Nome contém caracteres inválidos.");
         }
         String nomeLimpo = nome.trim();
         if (nomeLimpo.length() > TAMANHO_MAXIMO_NOME) {
-            throw new DadosInvalidosException("Nome do usuário pode ter no máximo " + TAMANHO_MAXIMO_NOME + " caracteres.");
+            throw new DadosInvalidosException("nome",
+                    "Nome do usuário pode ter no máximo " + TAMANHO_MAXIMO_NOME + " caracteres.");
         }
         return nomeLimpo;
+    }
+
+    private static boolean contemCaractereDeControle(String valor) {
+        return valor.chars().anyMatch(Character::isISOControl);
     }
 }

@@ -29,6 +29,28 @@ class UsuarioTest {
     }
 
     @Test
+    void criar_comCaractereNuloNoNome_lancaDadosInvalidosComCampo() {
+        // \u0000 não é espaço: trim() o removeria em silêncio. Por isso a checagem é antes do trim.
+        assertThatThrownBy(() -> new Usuario("Joao\u0000", "joao@exemplo.com"))
+                .isInstanceOf(DadosInvalidosException.class)
+                .satisfies(e -> assertThat(((DadosInvalidosException) e).getCampo()).isEqualTo("nome"));
+    }
+
+    @Test
+    void criar_comCaractereDeControleNoEmail_lancaDadosInvalidos() {
+        assertThatThrownBy(() -> new Usuario("Joao", "joao\u0000@exemplo.com"))
+                .isInstanceOf(DadosInvalidosException.class)
+                .satisfies(e -> assertThat(((DadosInvalidosException) e).getCampo()).isEqualTo("email"));
+    }
+
+    @Test
+    void criar_comEmailInvalido_informaOCampoEmail() {
+        assertThatThrownBy(() -> new Usuario("Ana", "ana.exemplo.com"))
+                .isInstanceOf(DadosInvalidosException.class)
+                .satisfies(e -> assertThat(((DadosInvalidosException) e).getCampo()).isEqualTo("email"));
+    }
+
+    @Test
     void criar_comNomeEmBranco_lancaDadosInvalidos() {
         assertThatThrownBy(() -> new Usuario(" ", "ana@exemplo.com"))
                 .isInstanceOf(DadosInvalidosException.class)

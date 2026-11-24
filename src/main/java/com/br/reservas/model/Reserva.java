@@ -15,29 +15,9 @@ import jakarta.persistence.ManyToOne;
 
 import java.time.LocalDateTime;
 
-/**
- * Reserva de uma sala por um usuário em um período.
- *
- * <h2>Período</h2>
- * <p>O período é <b>semiaberto</b>: [início, fim). O início faz parte da reserva; o fim não.
- * Por isso uma reserva que termina às 11h não ocupa o horário das 11h, e outra pode começar exatamente nesse horário.</p>
- *
- * <p>Exemplos:</p>
- * <ul>
- *   <li>10h–11h e 11h–12h: <b>não</b> conflitam (fim igual ao início é permitido);</li>
- *   <li>10h–11h e 10h30–11h30: <b>conflitam</b>;</li>
- *   <li>10h–12h e 10h–11h: <b>conflitam</b>;</li>
- *   <li>10h–11h e 09h–10h: <b>não</b> conflitam.</li>
- * </ul>
- *
- * <h2>Status</h2>
- * <pre>
- *   ATIVA ──cancelar()──▶ CANCELADA
- *   CANCELADA ──▶ (sem transição de volta)
- * </pre>
- * <p>Reservas canceladas não entram na checagem de conflito e não podem mais ser alteradas.
- * Cancelar uma reserva já cancelada não gera erro: a operação é idempotente.</p>
- */
+
+//  Reserva de uma sala por um usuário em um período.
+
 @Entity
 public class Reserva {
 
@@ -115,11 +95,14 @@ public class Reserva {
      * Público porque o serviço também valida filtros de consulta com a mesma regra.
      */
     public static void validarPeriodo(LocalDateTime inicio, LocalDateTime fim) {
-        if (inicio == null || fim == null) {
-            throw new DadosInvalidosException("Início e fim são obrigatórios.");
+        if (inicio == null) {
+            throw new DadosInvalidosException("inicio", "Início é obrigatório.");
+        }
+        if (fim == null) {
+            throw new DadosInvalidosException("fim", "Fim é obrigatório.");
         }
         if (!fim.isAfter(inicio)) {
-            throw new DadosInvalidosException("O fim precisa ser depois do início.");
+            throw new DadosInvalidosException("fim", "O fim precisa ser depois do início.");
         }
     }
 

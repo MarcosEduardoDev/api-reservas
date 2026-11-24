@@ -12,7 +12,7 @@ import jakarta.persistence.Id;
  *
  * <p>Regras garantidas pela própria entidade:</p>
  * <ul>
- *   <li>o nome não pode ser vazio e tem no máximo 100 caracteres;</li>
+ *   <li>o nome não pode ser vazio, não pode ter caracteres de controle e tem no máximo 100 caracteres;</li>
  *   <li>a capacidade é a quantidade máxima de pessoas e precisa ser maior que zero;</li>
  *   <li>uma sala inativa (em manutenção, por exemplo) não recebe novas reservas.</li>
  * </ul>
@@ -89,18 +89,22 @@ public class Sala {
 
     private static String validarNome(String nome) {
         if (nome == null || nome.isBlank()) {
-            throw new DadosInvalidosException("Nome da sala é obrigatório.");
+            throw new DadosInvalidosException("nome", "Nome da sala é obrigatório.");
+        }
+        if (nome.chars().anyMatch(Character::isISOControl)) {
+            throw new DadosInvalidosException("nome", "Nome contém caracteres inválidos.");
         }
         String nomeLimpo = nome.trim();
         if (nomeLimpo.length() > TAMANHO_MAXIMO_NOME) {
-            throw new DadosInvalidosException("Nome da sala pode ter no máximo " + TAMANHO_MAXIMO_NOME + " caracteres.");
+            throw new DadosInvalidosException("nome",
+                    "Nome da sala pode ter no máximo " + TAMANHO_MAXIMO_NOME + " caracteres.");
         }
         return nomeLimpo;
     }
 
     private static Integer validarCapacidade(Integer capacidade) {
         if (capacidade == null || capacidade <= 0) {
-            throw new DadosInvalidosException("A capacidade deve ser maior que zero.");
+            throw new DadosInvalidosException("capacidade", "A capacidade deve ser maior que zero.");
         }
         return capacidade;
     }

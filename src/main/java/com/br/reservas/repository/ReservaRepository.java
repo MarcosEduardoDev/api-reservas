@@ -2,14 +2,17 @@ package com.br.reservas.repository;
 
 import com.br.reservas.model.Reserva;
 import com.br.reservas.model.TipoReserva;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /*
  * Convenção dos períodos: uma reserva [r.inicio, r.fim) e um período novo [inicio, fim)
@@ -39,6 +42,14 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
     /** O usuário tem alguma reserva (ativa ou cancelada)? Usado para impedir a exclusão de usuários com histórico. */
     boolean existsByUsuario_Id(Long usuarioId);
+
+    /**
+     * Busca a reserva e trava a linha até o fim da transação. Alteração e cancelamento usam isto,
+     * para que um não sobrescreva o outro: o segundo espera e enxerga o status já gravado.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from Reserva r where r.id = :id")
+    Optional<Reserva> buscarComBloqueio(@Param("id") Long id);
 
     /** Reservas de qualquer sala que se sobrepõem ao período, de qualquer status. */
     @Query("select r from Reserva r where r.inicio < :fim and r.fim > :inicio")

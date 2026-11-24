@@ -7,8 +7,9 @@ services:
       POSTGRES_DB: reservas
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
+    # Só a máquina local acessa o banco (127.0.0.1), não a rede.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - reservas-db:/var/lib/postgresql/data
     healthcheck:
@@ -28,7 +29,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
 volumes:
   reservas-db:
