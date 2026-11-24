@@ -3,6 +3,14 @@
 API REST para cadastrar salas e usuários e reservar salas por período, sem conflito de horário.
 Projeto de estudo construído com Spring Boot, JPA e PostgreSQL, com foco em regras de domínio, testes e execução em contêiner.
 
+## Destaques
+
+- **Regras de negócio no domínio**: as entidades protegem o próprio estado; não há setters públicos que permitam contorná-las.
+- **Concorrência tratada**: reservas da mesma sala são serializadas com `SELECT ... FOR UPDATE`, evitando dupla reserva mesmo sob requisições simultâneas.
+- **Contrato de erro consistente**: todas as respostas de erro seguem o mesmo formato, com status HTTP coerente.
+- **Testes sem banco**: mais de 100 testes unitários e de contrato HTTP, rodando com JUnit 5, Mockito e AssertJ.
+- **Pronto para rodar**: `docker compose up --build` sobe a API e o PostgreSQL, sem nenhuma senha no código.
+
 ## Funcionalidades
 
 - Cadastro e manutenção de **salas** (nome, capacidade, ativar/desativar).
@@ -193,7 +201,7 @@ No IntelliJ, defina `DB_PASSWORD` em *Run → Edit Configurations → Environmen
 ./mvnw test
 ```
 
-São 65 testes:
+São mais de 100 testes:
 
 - **Domínio** (`ReservaTest`, `SalaTest`, `UsuarioTest`): regras de período, fronteiras do intervalo, status, validações e transições.
 - **Serviços** (`ReservaServiceTest`, `SalaServiceTest`, `UsuarioServiceTest`): fluxos com repositórios simulados. Também verificam que nada é gravado quando uma regra falha.
